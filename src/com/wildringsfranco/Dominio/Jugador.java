@@ -2,55 +2,53 @@ package com.wildringsfranco.Dominio;
 
 import javax.swing.*;
 
-class Jugador {
+public class Jugador {
     private String nombreWF;
     private int dineroWF;
-    private ImageIcon icono;
+
     private int resultadoDadoWF;
     private int apuestaWF;
 
-    public Jugador(String nombreWF, int dineroWF, ImageIcon icono) {
+    public Jugador(String nombreWF) {
         this.nombreWF = nombreWF;
-        this.dineroWF = dineroWF;
-        this.icono = icono;
+        this.apuestaWF = 500;
+        this.resultadoDadoWF = 0;
+
+    }
+    public void incrementarDinero(int monto){
+        dineroWF += monto;
     }
 
-    // Getters y setters para los atributos
+    public void decrementarDinero(int monto){
+        dineroWF -= monto;
+    }
 
     public String getNombreWF() {
         return nombreWF;
-    }
-
-    public void setNombreWF(String nombreWF) {
-        this.nombreWF = nombreWF;
     }
 
     public int getDineroWF() {
         return dineroWF;
     }
 
-    public void setDineroWF(int dineroWF) {
-        this.dineroWF = dineroWF;
-    }
-
-    public ImageIcon getIcono() {
-        return icono;
-    }
-
-    public void setIcono(ImageIcon icono) {
-        this.icono = icono;
-    }
-
     public int getResultadoDadoWF() {
         return resultadoDadoWF;
     }
 
-    public void setResultadoDadoWF(int resultadoDadoWF) {
-        this.resultadoDadoWF = resultadoDadoWF;
-    }
-
     public int getApuestaWF() {
         return apuestaWF;
+    }
+
+    public void setNombreWF(String nombreWF) {
+        this.nombreWF = nombreWF;
+    }
+
+    public void setDineroWF(int dineroWF) {
+        this.dineroWF = dineroWF;
+    }
+
+    public void setResultadoDadoWF(int resultadoDadoWF) {
+        this.resultadoDadoWF = resultadoDadoWF;
     }
 
     public void setApuestaWF(int apuestaWF) {

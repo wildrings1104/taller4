@@ -1,131 +1,198 @@
 package com.wildringsfranco.Dominio;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Random;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
-
 public class Guayabita {
-    private List<Jugador> jugadoresWF;
+    private int dadoWF = 0;
     private int poteWF;
-    private int apuestaMinimaWF;
-    private ImageIcon[] imagenesDados;
+    private int numeroJugadoresWF;
+    private int jugadorActual = 0;
+    private Jugador[] jugadoresWF;
+    private Random random = new Random();
 
     public Guayabita() {
-        this.jugadoresWF = new ArrayList<>();
         this.poteWF = 0;
-        this.apuestaMinimaWF = 0;
-        this.imagenesDados = new ImageIcon[6]; // Arreglo para 6 imágenes de dados
-        cargarImagenesDados(); // Cargar las imágenes de los dados
-        iniciarJuego();
     }
+    private boolean juegoIniciado = false;
+
     public void iniciarJuego() {
-        ImageIcon icon = new ImageIcon("\\Users\\Public\\Documents\\Taller4\\src\\com\\wildringsfranco\\Dominio\\GuayabaP.png");
-
-        int numeroJugadores = Integer.parseInt((String) JOptionPane.showInputDialog(null, "Ingrese el número de jugadores:", "Número de Jugadores", JOptionPane.QUESTION_MESSAGE, icon, null, null));
-        poteWF = Integer.parseInt((String) JOptionPane.showInputDialog(null,"Ingrese el monto inicial del pote:","valor inicial del pote", JOptionPane.QUESTION_MESSAGE, icon, null, null));
-        apuestaMinimaWF = Integer.parseInt((String) JOptionPane.showInputDialog(null, "Ingrese el valor mínimo de apuesta inicial:", "Apuesta Mínima", JOptionPane.QUESTION_MESSAGE, icon, null, null));
-
-        for (int i = 0; i < numeroJugadores; i++) {
-            String nombreWF = (String) JOptionPane.showInputDialog(null, "Ingrese el nombre del Jugador " + (i + 1) + ":", "Nombre del Jugador", JOptionPane.QUESTION_MESSAGE, icon, null, null);
-            int dineroWF = Integer.parseInt((String) JOptionPane.showInputDialog(null, "Ingrese el dinero del jugador " + (i + 1) + ":", "Dinero del Jugador", JOptionPane.QUESTION_MESSAGE, icon, null, null));
-            jugadoresWF.add(new Jugador(nombreWF, dineroWF, icon));
+        if (juegoIniciado) {
+            JOptionPane.showMessageDialog(null, "El juego ya ha comenzado.");
+            return;
         }
+        ImageIcon icon = new ImageIcon("C:\\Users\\Public\\Documents\\Taller4\\src\\com\\wildringsfranco\\Imagenes\\perfil.png");
+        this.numeroJugadoresWF = Integer.parseInt((String) JOptionPane.showInputDialog(null,
+                "Cuantos usuarios jugaran", "Cantidad de Jugadores", JOptionPane.QUESTION_MESSAGE, icon, null, null));
+        this.jugadoresWF = new Jugador[numeroJugadoresWF];
 
-        poteWF = apuestaMinimaWF * numeroJugadores;
+        juegoIniciado = true;
+        generarJugadoresWF();
 
-        while (poteWF > 0 && jugadoresWF.size() > 1) {
-            for (Jugador jugador : jugadoresWF) {
-                if (jugador.getDineroWF() <= 0) {
-                    jugadoresWF.remove(jugador);
-                    continue;
+        jugar();
+    }
+
+    private void generarJugadoresWF() {
+        for (int i = 0; i < numeroJugadoresWF; i++) {
+            ImageIcon icon = new ImageIcon("C:\\Users\\Public\\Documents\\Taller4\\src\\com\\wildringsfranco\\Imagenes\\perfil.png");
+            String nombreWF = (String) JOptionPane.showInputDialog(null, "Nombre del Jugador " + (i + 1), "Nombre del Jugador", JOptionPane.QUESTION_MESSAGE, icon, null, null);
+            jugadoresWF[i] = new Jugador(nombreWF);
+            jugadoresWF[i].setDineroWF(obtenerDineroWF());
+            poteWF += 500;
+        }
+    }
+
+    public int obtenerResultadoDadoWF() {
+        return random.nextInt(6) + 1;
+    }
+
+    public int verApuestaWF(Jugador jugador) {
+        int apuestaWF = 0;
+        boolean apuestaValida = false;
+
+        while (!apuestaValida) {
+            ImageIcon icon = new ImageIcon("C:\\Users\\Public\\Documents\\Taller4\\src\\com\\wildringsfranco\\Imagenes\\apuesta.png");
+            String input = (String) JOptionPane.showInputDialog(null, "Ingrese su apuesta" + " ( Usted cuenta con: " + jugador.getDineroWF()
+                            + ") y el pote actual es de: " + getPoteWF(),"Realizar apuesta", JOptionPane.QUESTION_MESSAGE,icon,null,null);
+
+            try {
+                apuestaWF = Integer.parseInt(input);
+                if (apuestaWF >= 1 && apuestaWF <= jugador.getDineroWF() && apuestaWF <= poteWF) {
+                    apuestaValida = true;
+                } else {
+                    JOptionPane.showMessageDialog(null, "Apuesta no válida. Debes apostar un valor entre 1 y tu presupuesto actual.");
                 }
-
-                lanzarDadosWF(jugador);
-
-                if (jugador.getResultadoDadoWF() == 1 || jugador.getResultadoDadoWF() == 6) {
-                    continue;
-                }
-
-                int opcionApuesta = JOptionPane.showConfirmDialog(null, jugador.getNombreWF() + ", ¿deseas hacer una apuesta?", "Guayabita", JOptionPane.YES_NO_OPTION);
-
-                if (opcionApuesta == JOptionPane.YES_OPTION) {
-                    realizarApuestaWF(jugador);
-                }
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(null, "Ingresa un valor numérico válido.");
             }
         }
 
-        mostrarResultados();
+        return apuestaWF;
     }
 
-    private void cargarImagenesDados() {
-        for (int i = 0; i < 6; i++) {
-            String nombreImagen = "\\Users\\Public\\Documents\\Taller4\\src\\com\\wildringsfranco\\Dominio\\uno" + (i + 1) + ".png";
-            imagenesDados[i] = new ImageIcon(nombreImagen);
+    public int obtenerDineroWF() {
+        int dineroWF = 0;
+        boolean DineroActivo = false;
+
+        Jugador jugador = jugadoresWF[jugadorActual];
+        jugadorActual = (jugadorActual + 1) % jugadoresWF.length;
+
+        while (!DineroActivo) {
+            ImageIcon icon = new ImageIcon("C:\\Users\\Public\\Documents\\Taller4\\src\\com\\wildringsfranco\\Imagenes\\dinero.png");
+            String input = (String) JOptionPane.showInputDialog(null, "Ingresa el Dinero que tiene para apostar Señor(a): "
+                    + jugador.getNombreWF(), "Dinero para apostar", JOptionPane.QUESTION_MESSAGE, icon, null, null);
+
+            try {
+                dineroWF = Integer.parseInt(input);
+                if (dineroWF >= 550) {
+                    DineroActivo = true;
+                } else {
+                    JOptionPane.showMessageDialog(null, "Dinero inválido. Debe ser un valor mayor o igual a 550. \n"
+                            + "Para poder aportar los 500 del ingreso al juego y tengas mínimo 50 para apostar");
+                }
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(null, "Ingresa un valor numérico válido.");
+            }
         }
-        for (int i = 0; i < 6; i++) {
-            String nombreImagen = "\\Users\\Public\\Documents\\Taller4\\src\\com\\wildringsfranco\\Dominio\\dos" + (i + 1) + ".png";
-            imagenesDados[i] = new ImageIcon(nombreImagen);
+
+
+        poteWF += 500;
+        jugador.decrementarDinero( - 500);
+        return dineroWF;
+    }
+
+    public void jugar() {
+        boolean juegoActivo = true;
+        boolean jugadorGano = false;
+
+        while (juegoActivo) {
+            Jugador jugador = jugadoresWF[jugadorActual];
+            ImageIcon icono = new ImageIcon("C:\\Users\\Public\\Documents\\Taller4\\src\\com\\wildringsfranco\\Imagenes\\GuayabaP.png");
+            JOptionPane.showMessageDialog(null, "Turno del Señor(a) " + jugador.getNombreWF(), "Turno", JOptionPane.QUESTION_MESSAGE, icono);
+
+            int resultadoDados = obtenerResultadoDadoWF();
+            String mensaje = "Resultado del dado: " + resultadoDados;
+            ImageIcon iconoDado = new ImageIcon("C:\\Users\\Public\\Documents\\Taller4\\src\\com\\wildringsfranco\\Imagenes\\dado" + resultadoDados + ".png");
+            JOptionPane.showMessageDialog(null, "Resultado del primer lanzamiento", "Resultado 1er lanzamiento" + resultadoDados, JOptionPane.PLAIN_MESSAGE, iconoDado);
+
+            if (resultadoDados != 1 && resultadoDados != 6) {
+                boolean quiereApostar = JOptionPane.showConfirmDialog(
+                        null,
+                        "Quieres apostar con este dado?",
+                        "Apostar",
+                        JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+
+                if (quiereApostar) {
+                    int apuesta = verApuestaWF(jugador);
+                    int resultadoSegundaTirada = obtenerResultadoDadoWF();
+                    ImageIcon iconoSegundaDado = new ImageIcon("C:\\Users\\Public\\Documents\\Taller4\\src\\com\\wildringsfranco\\Imagenes\\dado" + resultadoSegundaTirada + ".png");
+                    JOptionPane.showMessageDialog(null, "Resultado del segundo lanzamiento: ", "Resultado 2do lanzamiento", JOptionPane.PLAIN_MESSAGE, iconoSegundaDado);
+
+                    if (resultadoSegundaTirada > resultadoDados) {
+                        jugador.incrementarDinero(apuesta);
+                        poteWF -= apuesta;
+                        ImageIcon iconoGanador = new ImageIcon("C:\\Users\\Public\\Documents\\Taller4\\src\\com\\wildringsfranco\\Imagenes\\ganar.png");
+                        JOptionPane.showMessageDialog(null, "Ganaste!", "Ganador", JOptionPane.QUESTION_MESSAGE, iconoGanador);
+                    } else {
+                        poteWF += apuesta;
+                        jugador.decrementarDinero(apuesta);
+                        ImageIcon iconoPerdedor = new ImageIcon("C:\\Users\\Public\\Documents\\Taller4\\src\\com\\wildringsfranco\\Imagenes\\perdedor.png");
+                        JOptionPane.showMessageDialog(null, "Perdiste!", "Perdedor", JOptionPane.QUESTION_MESSAGE, iconoPerdedor);
+                    }
+                }
+            }
+
+            if (jugador.getDineroWF() <= 0) {
+                JOptionPane.showMessageDialog(null, jugador.getNombreWF() + " No tienes Dinero, Has sido eliminado del juego.");
+                eliminarJugador(jugadorActual);
+            }
+
+            if (!quedanJugadoresConDinero() || poteWF <= 0) {
+                juegoActivo = false;
+            } else {
+                jugadorActual = (jugadorActual + 1) % jugadoresWF.length;
+            }
         }
-        for (int i = 0; i < 6; i++) {
-            String nombreImagen = "\\Users\\Public\\Documents\\Taller4\\src\\com\\wildringsfranco\\Dominio\\tres" + (i + 1) + ".png";
-            imagenesDados[i] = new ImageIcon(nombreImagen);
+
+        for (int i = 0; i < jugadoresWF.length; i++) {
+            if (jugadoresWF[i].getDineroWF() > 0) {
+                jugadorGano = true;
+                break;
+            }
         }
-        for (int i = 0; i < 6; i++) {
-            String nombreImagen = "\\Users\\Public\\Documents\\Taller4\\src\\com\\wildringsfranco\\Dominio\\cuatro" + (i + 1) + ".png";
-            imagenesDados[i] = new ImageIcon(nombreImagen);
-        }
-        for (int i = 0; i < 6; i++) {
-            String nombreImagen = "\\Users\\Public\\Documents\\Taller4\\src\\com\\wildringsfranco\\Dominio\\cinco" + (i + 1) + ".png";
-            imagenesDados[i] = new ImageIcon(nombreImagen);
-        }
-        for (int i = 0; i < 6; i++) {
-            String nombreImagen = "\\Users\\Public\\Documents\\Taller4\\src\\com\\wildringsfranco\\Dominio\\seis" + (i + 1) + ".png";
-            imagenesDados[i] = new ImageIcon(nombreImagen);
+
+        if (jugadorGano && poteWF <= 0) {
+            Jugador jugador = jugadoresWF[jugadorActual];
+            ImageIcon iconoGanador = new ImageIcon("C:\\Users\\Public\\Documents\\Taller4\\src\\com\\wildringsfranco\\Imagenes\\ganar.png");
+            JOptionPane.showMessageDialog(null, jugador.getNombreWF() + " ganó el pote.", "Ganador Final", JOptionPane.QUESTION_MESSAGE, iconoGanador);
+        } else if (jugadorGano) {
+            ImageIcon iconoCasino = new ImageIcon("C:\\Users\\Public\\Documents\\Taller4\\src\\com\\wildringsfranco\\Imagenes\\casino.png");
+            JOptionPane.showMessageDialog(null, "Gano el casino!", "Casino Gana", JOptionPane.QUESTION_MESSAGE, iconoCasino);
         }
     }
 
-    public void lanzarDadosWF(Jugador jugador) {
-        int resultadoDado = (int) (Math.random() * 6) + 1;
-
-        // Obtén la imagen del dado correspondiente al resultado
-        ImageIcon nombreImagen = imagenesDados[resultadoDado - 1];
-
-        jugador.setResultadoDadoWF(resultadoDado);
-
-        // Mostrar el resultado del dado con la imagen correspondiente
-        JOptionPane.showMessageDialog(null, "Resultado del dado: " + resultadoDado, "Lanzamiento de Dados", JOptionPane.INFORMATION_MESSAGE, nombreImagen);
-
-        if (resultadoDado == 1 || resultadoDado == 6) {
-            // Si saca 1 o 6, no puede apostar y cede el turno.
-            JOptionPane.showMessageDialog(null, jugador.getNombreWF() + ", has obtenido un 1 o un 6, por lo que no puedes realizar una apuesta y cedes el turno.", "Guayabita", JOptionPane.INFORMATION_MESSAGE);
+    private void eliminarJugador(int indice) {
+        Jugador[] nuevosJugadores = new Jugador[jugadoresWF.length - 1];
+        int contador = 0;
+        for (int i = 0; i < jugadoresWF.length; i++) {
+            if (i != indice) {
+                nuevosJugadores[contador] = jugadoresWF[i];
+                contador++;
+            }
         }
+        jugadoresWF = nuevosJugadores;
+        numeroJugadoresWF--;
+        jugadorActual = jugadorActual % numeroJugadoresWF;
     }
 
-    public void realizarApuestaWF(Jugador jugador) {
-        if (jugador.getResultadoDadoWF() == 1 || jugador.getResultadoDadoWF() == 6) {
-            JOptionPane.showMessageDialog(null, jugador.getNombreWF() + ", has obtenido un 1 o un 6, por lo que no puedes realizar una apuesta.", "Guayabita", JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-
-        int apuesta = Integer.parseInt(JOptionPane.showInputDialog("Ingrese el valor de la apuesta para " + jugador.getNombreWF() + ":"));
-
-        if (apuesta >= apuestaMinimaWF && apuesta <= jugador.getDineroWF()) {
-            jugador.setApuestaWF(apuesta);
-            poteWF += apuesta;
-            jugador.setDineroWF(jugador.getDineroWF() - apuesta);
-        } else {
-            JOptionPane.showMessageDialog(null, "La apuesta debe ser mayor o igual a la apuesta mínima y no puede exceder el dinero del jugador.", "Error en la apuesta", JOptionPane.ERROR_MESSAGE);
-            realizarApuestaWF(jugador);
-        }
-    }
-
-    public void mostrarResultados() {
-        StringBuilder resultados = new StringBuilder("Resultados del juego:\n\n");
-
+    private boolean quedanJugadoresConDinero() {
         for (Jugador jugador : jugadoresWF) {
-            resultados.append(jugador.getNombreWF()).append(": ").append(jugador.getDineroWF()).append(" dinero restante\n");
+            if (jugador.getDineroWF() > 0) {
+                return true;
+            }
         }
-
-        JOptionPane.showMessageDialog(null, resultados.toString(), "Resultados - Guayabita", JOptionPane.INFORMATION_MESSAGE);
+        return false;
+    }
+    public int getPoteWF() {
+        return poteWF;
     }
 }
